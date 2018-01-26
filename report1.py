@@ -267,9 +267,9 @@ def main():
     # print(adjust_time("28 November 2017 13:58", datetimeformat="DD MMMM YYYY"))
     # print(adjust_time("28 November 2017 13:58", datetimeformat="YYYYMMDDHHmm"))
 
-    NNB_CSV_INPUT_FILE = ['./data/SITE_VG2-NNB1.csv', './data/SITE_VG2-NNB2.csv', './data/SITE_VG2-NNB3.csv']
-    WB_CSV_INPUT_FILE = ['./data/SITE_VG2-WB1.csv', './data/SITE_VG2-WB2.csv', './data/SITE_VG2-WB3.csv']
-    NB_CSV_INPUT_FILE = ['./data/SITE_VG2-NB1.csv', './data/SITE_VG2-NB3.csv']
+    NNB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NNB1.csv', './data/VG2/SITE_VG2-NNB2.csv', './data/VG2/SITE_VG2-NNB3.csv']
+    WB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-WB1.csv', './data/VG2/SITE_VG2-WB2.csv', './data/VG2/SITE_VG2-WB3.csv']
+    NB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NB1.csv', './data/VG2/SITE_VG2-NB3.csv']
 
     # files = NNB_CSV_INPUT_FILE
     files = WB_CSV_INPUT_FILE
