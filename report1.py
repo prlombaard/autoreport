@@ -7,7 +7,7 @@ import numpy as np
 import glob
 
 
-def adjust_time(incorrect_datetime):
+def adjust_time(incorrect_datetime, datetimeformat="DD MMMM YYYY HHmm"):
     """Device read and stored the date incorrectly"""
     """The real time was 27 November 2017 10:25 the device recorded 28 November 2018 13:58"""
     """Therefore the device time as read from all CSV and STA files must be adjusted back in time"""
@@ -15,22 +15,22 @@ def adjust_time(incorrect_datetime):
     import maya
     import arrow
 
-    print(f'Incorrect datetime: {incorrect_datetime}')
+    # print(f'Incorrect datetime: {incorrect_datetime}')
 
     # parse date from string into datetime object
-    date1 = arrow.get(maya.parse("27 nov 2017 10:25").datetime())
+    date1 = arrow.get(maya.parse("27 nov 2017 13:58").datetime())
     date2 = arrow.get(maya.parse("28 nov 2017 13:58").datetime())
     diff = date2 - date1
-    print(f'Difference: {diff}')
+    # print(f'Difference: {diff}')
     corrected_date = arrow.get(maya.parse(incorrect_datetime).datetime()).shift(seconds=(-1*diff.total_seconds()))
-    return str(corrected_date.format("DD MMMM YYYY HHmm"))
+    return str(corrected_date.format(datetimeformat))
 
 
 def get_timestamp_from_csv(fpath):
     # Returns a string containing the timestamp extracted from inside CSV located at fpath
 
     # TODO: Return better timestamp YYYYMMDD-HHMM, use better 3rd party library
-    print(f'Opening {fpath}')
+    # print(f'Opening {fpath}')
     with open(fpath, mode='r') as f:
         for line in f:
             # print(line.lower())
@@ -39,18 +39,18 @@ def get_timestamp_from_csv(fpath):
                 break
     # print(line)
     timestamp = "".join([line[line.find(',') + 2:-3].replace(':', '')])
-    print(f'Before corrected  : {timestamp}')
+    # print(f'Before corrected  : {timestamp}')
     timestamp = adjust_time(timestamp)
-    print(f'Returning       : {timestamp}')
+    # print(f'Returning       : {timestamp}')
     return timestamp
 
 
 def get_xml_data(xmldata):
-    print(f'Trying to parse XML data')
+    # print(f'Trying to parse XML data')
     # from BeautifulSoup import BeautifulSoup
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(xmldata, "lxml")
-    print(f'Parsing of XML data complete, lets see if it worked')
+    # print(f'Parsing of XML data complete, lets see if it worked')
     find_str = ['StartFrequency', 'StopFrequency', 'ResolutionBandwidth']
     # print(soup.prettify())
     my_dict = {'startfrequency': -999, 'stopfrequency': -999, 'resolutionbandwidth': -999}
@@ -58,13 +58,13 @@ def get_xml_data(xmldata):
         # print(f'Trying to find {fstr.lower()}')
         s = soup.find(fstr.lower())
         if s:
-            print(f'Found {fstr} with value {s.string}')
+            # print(f'Found {fstr} with value {s.string}')
             my_dict[fstr.lower()] = int(s.string)
     return my_dict
 
 
 def get_csv_metadata_from_sta(zipfilename):
-    print(f'Trying to open ZipFile {zipfilename}')
+    # print(f'Trying to open ZipFile {zipfilename}')
     # Try to open Zip file
     with zipfile.ZipFile(zipfilename) as zf:
         # Try to open SA file inside of ZipFile object
@@ -74,6 +74,7 @@ def get_csv_metadata_from_sta(zipfilename):
 
 
 def plot_normal_graph(datain, csvfilename):
+    from matplotlib import pyplot as plt
     plt.plot(datain[:, 0], datain[:, 1])
     plt.title(f'{csvfilename}')
     plt.ylabel('Level [dBm]')
@@ -260,13 +261,34 @@ def analyse_data(csvfilename, sta_file_path):
 def main():
     import time
     start = time.time()
-    print(f'Analysing RF Level Data')
+    # print(f'Analysing RF Level Data')
 
-    print(adjust_time("28 November 2017 13:58"))
+    # print(adjust_time("28 November 2017 13:58"))
+    # print(adjust_time("28 November 2017 13:58", datetimeformat="DD MMMM YYYY"))
+    # print(adjust_time("28 November 2017 13:58", datetimeformat="YYYYMMDDHHmm"))
 
-    CSV_INPUT_FILE = './data/SITE_VG2-NB1.csv'
+    NNB_CSV_INPUT_FILE = ['./data/SITE_VG2-NNB1.csv', './data/SITE_VG2-NNB2.csv', './data/SITE_VG2-NNB3.csv']
+    WB_CSV_INPUT_FILE = ['./data/SITE_VG2-WB1.csv', './data/SITE_VG2-WB2.csv', './data/SITE_VG2-WB3.csv']
+    NB_CSV_INPUT_FILE = ['./data/SITE_VG2-NB1.csv', './data/SITE_VG2-NB3.csv']
 
-    get_timestamp_from_csv(CSV_INPUT_FILE)
+    # files = NNB_CSV_INPUT_FILE
+    files = WB_CSV_INPUT_FILE
+    # files = NB_CSV_INPUT_FILE
+
+    timestamp = []
+    metadata = []
+
+    for f in files:
+        timestamp.append(get_timestamp_from_csv(f))
+        print(timestamp[-1])
+        sta_file = '.'.join([f[:-4], 'sta'])
+        metadata.append(get_csv_metadata_from_sta(sta_file))
+        print(metadata[-1])
+
+    # Read data from CSV files for separate charts
+
+
+    # Plot all data on one chart
 
 
     end = time.time()
