@@ -15,7 +15,7 @@
 # DONE: Add plot to display original data before banding [03 DEC]
 # DONE: Add plot to display banded data [03 DEC]
 # TODO: Add plot to display banded and thresholded data together in one plot
-# TODO: Add plot maximized when showing
+# DONE: Add plot maximized when showing
 # TODO: Add plot size specified when saving plot to disk
 # TODO: Add median filter that have some leeway (think deviations). Original apply_median is too strict
 # DONE: Feed a list of files to analyse not only one [03 DEC]
@@ -114,7 +114,9 @@ def return_bands(datain, bands_limits=[1, 3, 9, 18, 30]):
 def plot_scatter_graph_bands(bands, x_axis_label='insert uom', chart_title='Insert chart title', filename=None,
                              plotmedian=True, prevmediums=None):
     # Plots individual bands
-    import matplotlib.pyplot as plt
+    # import matplotlib.pyplot as plt
+    from matplotlib import pyplot as plt
+    plt.figure(1)
     print('Plotting graph with bands')
     for b in bands:
         plt.plot(b[:, 0], b[:, 1], '-o')
@@ -149,7 +151,7 @@ def plot_scatter_graph_bands(bands, x_axis_label='insert uom', chart_title='Inse
     # Change the Y-Axis to something constant
     axis_scale = list(plt.axis())
     axis_scale[2] = -120
-    axis_scale[3] = -40
+    axis_scale[3] = -30
 
     # Apply the new axis to the plot
     plt.axis(axis_scale)
@@ -157,11 +159,17 @@ def plot_scatter_graph_bands(bands, x_axis_label='insert uom', chart_title='Inse
     if filename:
         print(f'Plotting {filename}')
         print(f'Saving plot to file {filename}')
+        file_format = filename[-3:]
         # TODO : include timestamp in the filename
-        plt.savefig(fname=filename, format='SVG', dpi='figure')
-    plt.show()
+
+        #DONE: Maximize the figure to be bigger before saving to disk
+        figure = plt.gcf()
+        figure.set_size_inches(16, 9)
+
+        plt.savefig(fname=filename, format=file_format, dpi=100)
+        # plt.savefig(fname=filename, format='SVG', dpi='figure')
+    # plt.show()
     plt.close()
-    # plt.show
 
 
 def apply_threshold(datain, threshold):
@@ -201,6 +209,10 @@ def analyse_data(csvfilename, sta_file_path):
 
     timestamp = get_timestamp_from_csv(csvfilename)
 
+    timestamp_for_filename = "".join(["201711", timestamp[:2], timestamp[-4:]])
+
+    print(timestamp_for_filename)
+
     title_str = f'RF Level Measurements for VG, resolution BW={resBW}, {timestamp}'
 
     # These value are pre-calculated based on the above constants
@@ -225,7 +237,7 @@ def analyse_data(csvfilename, sta_file_path):
         medians_before_threshold.append(np.median(b[:, 1]))
         print(f'Median band {index} = {medians_before_threshold[-1]}')
 
-    fpath = "".join(["./figs/before/", CSV_FILENAME[:-4], '.SVG'])
+    fpath = "".join(["./figs/before/", "b", timestamp_for_filename, "-", CSV_FILENAME[:-4], '.PNG'])
 
     # Plot original data
     plot_scatter_graph_bands(band, x_axis_label=x_axis_uom_text, chart_title=title_str,
@@ -247,14 +259,19 @@ def analyse_data(csvfilename, sta_file_path):
         medians_after_threshold.append(np.median(b[:, 1]))
         print(f'Median band {index} = {medians_after_threshold[-1]}')
 
-    fpath = "".join(["./figs/after/", CSV_FILENAME[:-4], '.SVG'])
+        fpath = "".join(["./figs/after/", "a", timestamp_for_filename, "-", CSV_FILENAME[:-4], '.PNG'])
 
     plot_scatter_graph_bands(band, x_axis_label=x_axis_uom_text, chart_title=title_str,
                              filename=fpath,
-                             plotmedian=True, prevmediums=medians_before_threshold)
+                             plotmedian=True, prevmediums=medians_after_threshold)
+
+    # Calculate once more just the median do not apply and plot
+
 
 
 def main():
+    import time
+    start = time.time()
     print(f'Analysing RF Level Data')
     # get_csv_metadata_from_sta(STA_FILE
 
@@ -274,6 +291,13 @@ def main():
         # return None
         analyse_data(CSV_INPUT_FILEPATH, STA_FILE)
         # break
+
+    end = time.time()
+    duration = end - start
+    print()
+    print()
+    print('============================================')
+    print(f"TOOK {duration} seconds to run script")
 
 
 if __name__ == "__main__":
