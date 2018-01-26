@@ -26,7 +26,7 @@ def adjust_time(incorrect_datetime, datetimeformat="DD MMMM YYYY HHmm"):
     return str(corrected_date.format(datetimeformat))
 
 
-def get_timestamp_from_csv(fpath):
+def get_timestamp_from_csv(fpath, datetimeformat = "DD MMMM YYYY HHmm"):
     # Returns a string containing the timestamp extracted from inside CSV located at fpath
 
     # TODO: Return better timestamp YYYYMMDD-HHMM, use better 3rd party library
@@ -40,7 +40,7 @@ def get_timestamp_from_csv(fpath):
     # print(line)
     timestamp = "".join([line[line.find(',') + 2:-3].replace(':', '')])
     # print(f'Before corrected  : {timestamp}')
-    timestamp = adjust_time(timestamp)
+    timestamp = adjust_time(timestamp, datetimeformat=datetimeformat)
     # print(f'Returning       : {timestamp}')
     return timestamp
 
@@ -258,6 +258,59 @@ def analyse_data(csvfilename, sta_file_path):
     # Calculate once more just the median do not apply and plot
 
 
+def generate_report1(csv_file_paths, sta_file_paths):
+    # Load data from CSVs
+    data = []
+    timestamp = []
+
+    for csv_f in csv_file_paths:
+        # data = np.loadtxt(csvfilename, skiprows=17, delimiter=',', usecols=(0, 1))
+        data.append(None)
+        data[-1] = np.genfromtxt(csv_f, skip_header=17, skip_footer=1, delimiter=',', usecols=(0, 1))
+
+        timestamp.append(get_timestamp_from_csv(csv_f, datetimeformat="DD MMMM YYYY HH:mm"))
+
+        x_axis_uom_text = 'MHz'
+        x_axis_uom_factor = 1 / 1000000
+
+        # Scale the frequency data from Hz to MHz
+        data[-1] = data[-1] * np.array([x_axis_uom_factor, 1])
+
+    csv_metadata = []
+
+    for sta_f in sta_file_paths:
+        # Load metadata from XML file to set certain
+
+        print(f'Path for STA = {sta_f}')
+        csv_metadata.append(get_csv_metadata_from_sta(sta_f))
+        csv_metadata[-1]['startfrequency'] = csv_metadata[-1]['startfrequency'] * x_axis_uom_factor
+        csv_metadata[-1]['stopfrequency'] = csv_metadata[-1]['stopfrequency'] * x_axis_uom_factor
+
+        print(csv_metadata[-1])
+
+        resBW = csv_metadata[-1]['resolutionbandwidth']
+
+    title_str = f'RF Level Measurements for VG, resolution BW={resBW}, {timestamp}'
+
+    fpath = "".join(["./figs/report01", '.PNG'])
+
+    # Plot original data
+    from matplotlib import pyplot as plt
+    for i, chart_data in enumerate(data):
+        plt.plot(chart_data[:, 0], chart_data[:, 1], alpha=0.8, linewidth=1, label=timestamp[i])
+    plt.legend(loc='upper right')
+    plt.title(f'Noise measurements')
+    plt.ylabel('Level [dBm]')
+    plt.xlabel('Frequency [MHz]')
+    # DONE: Maximize the figure to be bigger before saving to disk
+    # figure = plt.gcf()
+    # figure.set_size_inches(16, 9)
+
+    plt.savefig(fname=fpath, format="PNG", dpi=100)
+    plt.grid()
+    plt.show()
+
+
 def main():
     import time
     start = time.time()
@@ -271,25 +324,20 @@ def main():
     WB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-WB1.csv', './data/VG2/SITE_VG2-WB2.csv', './data/VG2/SITE_VG2-WB3.csv']
     NB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NB1.csv', './data/VG2/SITE_VG2-NB3.csv']
 
-    # files = NNB_CSV_INPUT_FILE
-    files = WB_CSV_INPUT_FILE
-    # files = NB_CSV_INPUT_FILE
+    csv_files = NNB_CSV_INPUT_FILE
+    # csv_files = WB_CSV_INPUT_FILE
+    # csv_files = NB_CSV_INPUT_FILE
 
     timestamp = []
-    metadata = []
+    sta_files = []
 
-    for f in files:
+    for f in csv_files:
         timestamp.append(get_timestamp_from_csv(f))
         print(timestamp[-1])
-        sta_file = '.'.join([f[:-4], 'sta'])
-        metadata.append(get_csv_metadata_from_sta(sta_file))
-        print(metadata[-1])
+        sta_files.append('.'.join([f[:-4], 'sta']))
 
-    # Read data from CSV files for separate charts
-
-
-    # Plot all data on one chart
-
+    # Read and plot data from CSV files for separate charts
+    generate_report1(csv_files, sta_files)
 
     end = time.time()
     duration = end - start
