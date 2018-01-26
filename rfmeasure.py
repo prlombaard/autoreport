@@ -8,12 +8,12 @@
 # DONE: Apply median threshold to the "flatter" bands
 # DONE: Input : XML File that describes equipment setup during measurement, from .sta file
 # DONE: Make bands NOT hardcoded, array based instead of individual variables names b1,b2,b3,b4,b5
-# TODO: Plot median values for each band [WIP,03 DEC]
+# DONE: Plot median values for each band [03 DEC]
 # TODO: Replace print statements with logging.
 # DONE : SOLVED - Band 18MHz to 30MHz get nulled!!! when using 100M wide CSV file [SOLVED 03 DEC]\ solved : median filter applied took out most of the data between 18MHZ and 30MHz
 # DONE: Add save figures to files [03 DEC]
-# TODO: Add plot to display original data before banding
-# TODO: Add plot to display banded data
+# DONE: Add plot to display original data before banding [03 DEC]
+# DONE: Add plot to display banded data [03 DEC]
 # TODO: Add plot to display banded and thresholded data together in one plot
 # TODO: Add plot maximized when showing
 # TODO: Add plot size specified when saving plot to disk
@@ -30,7 +30,7 @@ import glob
 
 
 # Constants
-#CSV_INPUT_FILE = './data/SITE_VG2-NB1.csv'
+# CSV_INPUT_FILE = './data/SITE_VG2-NB1.csv'
 # CSV_INPUT_FILE = './data/SITE_VG2-WB2.csv'
 # CSV_INPUT_FILE = './data/SITE_VG2-100M2.csv'
 # STA_FILE = '.'.join([CSV_INPUT_FILE[:-4], 'sta'])
@@ -41,6 +41,8 @@ import glob
 
 def get_timestamp_from_csv(fpath):
     # Returns a string containing the timestamp extracted from inside CSV located at fpath
+
+    # TODO: Return better timestamp YYYYMMDD-HHMM, use better 3rd party library
     print(f'Opening {fpath}')
     with open(fpath, mode='r') as f:
         for line in f:
@@ -49,7 +51,7 @@ def get_timestamp_from_csv(fpath):
                 # print('timestamp found')
                 break
     # print(line)
-    timestamp = "".join([line[line.find(',')+2:-3].replace(':', '')])
+    timestamp = "".join([line[line.find(',') + 2:-3].replace(':', '')])
     print(timestamp)
     return timestamp
 
@@ -104,12 +106,13 @@ def return_bands(datain, bands_limits=[1, 3, 9, 18, 30]):
             band[0] = datain[datain[:, 0] <= bands_limits[0]]
         else:
             band[i] = datain[datain[:, 0] <= bands_limits[i]]
-            band[i] = band[i][band[i][:, 0] >= bands_limits[i-1]]
+            band[i] = band[i][band[i][:, 0] >= bands_limits[i - 1]]
     return band
 
 
 # def plot_scatter_graph_bands(b1, b2, b3, b4, b5, csvfilename):
-def plot_scatter_graph_bands(bands, x_axis_label='insert uom', chart_title='Insert chart title', filename=None, plotmedian=True, prevmediums=None):
+def plot_scatter_graph_bands(bands, x_axis_label='insert uom', chart_title='Insert chart title', filename=None,
+                             plotmedian=True, prevmediums=None):
     # Plots individual bands
     import matplotlib.pyplot as plt
     print('Plotting graph with bands')
@@ -142,13 +145,20 @@ def plot_scatter_graph_bands(bands, x_axis_label='insert uom', chart_title='Inse
     plt.title(f'{chart_title}')
     plt.ylabel('Level [dBm]')
     plt.xlabel(f'Frequency [{x_axis_label}]')
-    plt.axis([-1.395, 31.495000000000001, -100.03118953704838, -23.440555000305125])
+
+    # Change the Y-Axis to something constant
+    axis_scale = list(plt.axis())
+    axis_scale[2] = -120
+    axis_scale[3] = -40
+
+    # Apply the new axis to the plot
+    plt.axis(axis_scale)
     plt.grid()
     if filename:
         print(f'Plotting {filename}')
-        fpath = "".join(["./figs/", filename, '.SVG'])
-        print(f'Saving plot to file {fpath}')
-        plt.savefig(fname=fpath, format='SVG', dpi='figure')
+        print(f'Saving plot to file {filename}')
+        # TODO : include timestamp in the filename
+        plt.savefig(fname=filename, format='SVG', dpi='figure')
     plt.show()
     plt.close()
     # plt.show
@@ -171,7 +181,7 @@ def analyse_data(csvfilename, sta_file_path):
     data = None
     data = np.genfromtxt(csvfilename, skip_header=17, skip_footer=1, delimiter=',', usecols=(0, 1))
     x_axis_uom_text = 'MHz'
-    x_axis_uom_factor = 1/1000000
+    x_axis_uom_factor = 1 / 1000000
 
     # Scale the frequency data from Hz to MHz
     data = data * np.array([x_axis_uom_factor, 1])
@@ -215,9 +225,11 @@ def analyse_data(csvfilename, sta_file_path):
         medians_before_threshold.append(np.median(b[:, 1]))
         print(f'Median band {index} = {medians_before_threshold[-1]}')
 
+    fpath = "".join(["./figs/before/", CSV_FILENAME[:-4], '.SVG'])
+
     # Plot original data
     plot_scatter_graph_bands(band, x_axis_label=x_axis_uom_text, chart_title=title_str,
-                             filename="".join([CSV_FILENAME[:-4], "_banded_before_thresholding"]),
+                             filename=fpath,
                              plotmedian=True)
 
     # Apply destructive thresholding on data. NOTE THIS CHANGES FOR EACH AND EVERY MEASUREMENT!!!!
@@ -235,21 +247,18 @@ def analyse_data(csvfilename, sta_file_path):
         medians_after_threshold.append(np.median(b[:, 1]))
         print(f'Median band {index} = {medians_after_threshold[-1]}')
 
-    # if len(band) == 4:
-    #     print(f'Plotting 4 bands')
-    # plot_scatter_graph_bands(band, x_axis_label=x_axis_uom_text, chart_title=title_str, filename=csvfilename)
-    # elif len(band) == 5:
-    #     print(f'Plotting 5 bands')
+    fpath = "".join(["./figs/after/", CSV_FILENAME[:-4], '.SVG'])
+
     plot_scatter_graph_bands(band, x_axis_label=x_axis_uom_text, chart_title=title_str,
-                             filename="".join([CSV_FILENAME[:-4], "_banded_after_thresholding"])
-                             ,plotmedian=True, prevmediums=medians_before_threshold)
+                             filename=fpath,
+                             plotmedian=True, prevmediums=medians_before_threshold)
 
 
 def main():
     print(f'Analysing RF Level Data')
-   # get_csv_metadata_from_sta(STA_FILE
+    # get_csv_metadata_from_sta(STA_FILE
 
-    #Analyse one CSV file and save to disk
+    # Analyse one CSV file and save to disk
     # analyse_data(CSV_INPUT_FILE)
 
     # Analyse all CSV file found in specified folder
