@@ -6,10 +6,13 @@
 # DONE: Import data from CSV
 # DONE: Plot data, colour according to bands
 # DONE: Apply median threshold to the "flatter" bands
+# TODO: Input : XML File that describes equipment setup during measurement, from .sta file
+# DONE: Make bands NOT hardcoded, array based instead of individual variables names b1,b2,b3,b4,b5
+
 
 import zipfile
 import os
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import numpy as np
 
 # Constants
@@ -38,8 +41,6 @@ def my_open_zipfile(zipfilename):
 
 
 def plot_normal_graph(datain, csvfilename):
-    import matplotlib.pyplot as plt
-    import numpy as np
     plt.plot(datain[:, 0], datain[:, 1])
     plt.title(f'{csvfilename}')
     plt.ylabel('Level [dBm]')
@@ -48,34 +49,33 @@ def plot_normal_graph(datain, csvfilename):
     plt.show()
 
 
-def return_bands(datain, bands_lims=[1, 3, 9, 18, 30]):
-    band1 = []
-    band2 = []
-    band3 = []
-    band4 = []
-    band5 = []
-    band1 = datain[datain[:, 0] <= bands_lims[0]]
-    band2 = datain[datain[:, 0] <= bands_lims[1]]
-    band2 = band2[band2[:, 0] >= bands_lims[0]]
-    band3 = datain[datain[:, 0] <= bands_lims[2]]
-    band3 = band3[band3[:, 0] >= bands_lims[1]]
-    band4 = datain[datain[:, 0] <= bands_lims[3]]
-    band4 = band4[band4[:, 0] >= bands_lims[2]]
-    band5 = datain[datain[:, 0] <= bands_lims[4]]
-    band5 = band5[band5[:, 0] >= bands_lims[3]]
+def return_bands(datain, bands_limits=[1, 3, 9, 18, 30]):
+    # Return n amount of arrays based on how many input ranges are provided
+    # Each of the band limits are the end of the current band
+    # Unit of measure for bands_limits is MHz
+    band = [0 for _ in range(len(bands_limits))]
+    print(f'Length of bands {len(band)}')
 
-    return band1, band2, band3, band4, band5
+    for i in range(len(bands_limits)):
+        print(f'band {i}')
+        if i == 0:
+            band[0] = datain[datain[:, 0] <= bands_limits[0]]
+        else:
+            band[i] = datain[datain[:, 0] <= bands_limits[i]]
+            band[i] = band[i][band[i][:, 0] >= bands_limits[i-1]]
+    return band
 
 
-def plot_scatter_graph_bands(b1, b2, b3, b4, b5, csvfilename):
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    plt.plot(b1[:, 0], b1[:, 1], '-o')
-    plt.plot(b2[:, 0], b2[:, 1], '-o')
-    plt.plot(b3[:, 0], b3[:, 1], '-o')
-    plt.plot(b4[:, 0], b4[:, 1], '-o')
-    plt.plot(b5[:, 0], b5[:, 1], '-o')
+# def plot_scatter_graph_bands(b1, b2, b3, b4, b5, csvfilename):
+def plot_scatter_graph_bands(bands, csvfilename):
+    # Plots individual bands
+    for b in bands:
+        plt.plot(b[:, 0], b[:, 1], '-o')
+    # plt.plot(b1[:, 0], b1[:, 1], '-o')
+    # plt.plot(b2[:, 0], b2[:, 1], '-o')
+    # plt.plot(b3[:, 0], b3[:, 1], '-o')
+    # plt.plot(b4[:, 0], b4[:, 1], '-o')
+    # plt.plot(b5[:, 0], b5[:, 1], '-o')
     plt.title(f'{csvfilename}')
     plt.ylabel('Level [dBm]')
     plt.xlabel('Frequency [MHz]')
@@ -95,8 +95,6 @@ def apply_median(datain):
 
 
 def plot_scatter_graph(datain, csvfilename):
-    import matplotlib.pyplot as plt
-    import numpy as np
     plt.scatter(datain[:, 0], datain[:, 1], color='red')
     plt.scatter(datain[:, 0], datain[:, 1], color='yellow')
     plt.title(f'{csvfilename}')
@@ -107,9 +105,6 @@ def plot_scatter_graph(datain, csvfilename):
 
 
 def plot_data(csvfilename):
-    import matplotlib.pyplot as plt
-    import numpy as np
-
     data = np.loadtxt(csvfilename, skiprows=17, delimiter=',', usecols=(0, 1))
 
     data = data * np.array([1/1000000, 1])
@@ -121,17 +116,21 @@ def plot_data(csvfilename):
 
     # plot_scatter_graph(data, csvfilename)
 
-    b1, b2, b3, b4, b5 = return_bands(data)
+    # band = return_bands(data)
+    band = return_bands(data, bands_limits=[1, 3, 9, 18, 30])
 
-    print(f'Median b1 {np.median(b1[:,1])}')
-    print(f'Median b2 {np.median(b2[:,1])}')
-    print(f'Median b3 {np.median(b3[:,1])}')
-    print(f'Median b4 {np.median(b4[:,1])}')
-    print(f'Median b5 {np.median(b5[:,1])}')
+    for b in band:
+        print(f'Median b {np.median(b[:,1])}')
+    # print(f'Median b2 {np.median(b2[:,1])}')
+    # print(f'Median b3 {np.median(b3[:,1])}')
+    # print(f'Median b4 {np.median(b4[:,1])}')
+    # print(f'Median b5 {np.median(b5[:,1])}')
     # plot_scatter_graph_bands(b1, b2, b3, b4, b5, csvfilename)
 
-    plot_scatter_graph_bands(b1, b2, apply_median(b3), apply_median(b4), apply_median(b5), csvfilename)
-
+    if len(band) == 4:
+        plot_scatter_graph_bands([apply_threshold(band[0], -60), band[1], apply_median(band[2]), apply_median(band[3])], csvfilename)
+    elif len(band) == 5:
+        plot_scatter_graph_bands([apply_threshold(band[0], -60), band[1], apply_median(band[2]), apply_median(band[3]), apply_median(band[4])], csvfilename)
 
 
 def main():
