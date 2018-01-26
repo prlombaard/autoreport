@@ -1,27 +1,5 @@
-# This script automatically calculates the site RF noise based on given parameters
-# Input : CSV file from Agilent FieldFox
-
-
-# TODOs:
-# DONE: Import data from CSV
-# DONE: Plot data, colour according to bands
-# DONE: Apply median threshold to the "flatter" bands
-# DONE: Input : XML File that describes equipment setup during measurement, from .sta file
-# DONE: Make bands NOT hardcoded, array based instead of individual variables names b1,b2,b3,b4,b5
-# DONE: Plot median values for each band [03 DEC]
-# TODO: Replace print statements with logging.
-# DONE : SOLVED - Band 18MHz to 30MHz get nulled!!! when using 100M wide CSV file [SOLVED 03 DEC]\ solved : median filter applied took out most of the data between 18MHZ and 30MHz
-# DONE: Add save figures to files [03 DEC]
-# DONE: Add plot to display original data before banding [03 DEC]
-# DONE: Add plot to display banded data [03 DEC]
-# TODO: Add plot to display banded and thresholded data together in one plot
-# DONE: Add plot maximized when showing
-# TODO: Add plot size specified when saving plot to disk
-# TODO: Add median filter that have some leeway (think deviations). Original apply_median is too strict
-# DONE: Feed a list of files to analyse not only one [03 DEC]
-# TODO: Bug, handle missing STA data associated with CSV file
-# TODO: Testing framework to test integrity of the module
-# TODO: Extract time stamp from CSV/STA file for usage in Figure Title
+# This script will generate a report of the noise level measurements transposing charts ontop of each other
+# The chart should display the level measurements for the morning midday and afternoon
 
 import zipfile
 import os
@@ -29,14 +7,23 @@ import numpy as np
 import glob
 
 
-# Constants
-# CSV_INPUT_FILE = './data/SITE_VG2-NB1.csv'
-# CSV_INPUT_FILE = './data/SITE_VG2-WB2.csv'
-# CSV_INPUT_FILE = './data/SITE_VG2-100M2.csv'
-# STA_FILE = '.'.join([CSV_INPUT_FILE[:-4], 'sta'])
+def adjust_time(incorrect_datetime):
+    """Device read and stored the date incorrectly"""
+    """The real time was 27 November 2017 10:25 the device recorded 28 November 2018 13:58"""
+    """Therefore the device time as read from all CSV and STA files must be adjusted back in time"""
+    """by 1 day, 3hours and 33minutes or 27.55 hours"""
+    import maya
+    import arrow
 
-# These value are pre-calculated based on the above constants
-# CSV_FILENAME = CSV_INPUT_FILE[CSV_INPUT_FILE.rfind('/'):][1:]
+    print(f'Incorrect datetime: {incorrect_datetime}')
+
+    # parse date from string into datetime object
+    date1 = arrow.get(maya.parse("27 nov 2017 10:25").datetime())
+    date2 = arrow.get(maya.parse("28 nov 2017 13:58").datetime())
+    diff = date2 - date1
+    print(f'Difference: {diff}')
+    corrected_date = arrow.get(maya.parse(incorrect_datetime).datetime()).shift(seconds=(-1*diff.total_seconds()))
+    return str(corrected_date.format("DD MMMM YYYY HHmm"))
 
 
 def get_timestamp_from_csv(fpath):
@@ -52,7 +39,9 @@ def get_timestamp_from_csv(fpath):
                 break
     # print(line)
     timestamp = "".join([line[line.find(',') + 2:-3].replace(':', '')])
-    print(timestamp)
+    print(f'Before corrected  : {timestamp}')
+    timestamp = adjust_time(timestamp)
+    print(f'Returning       : {timestamp}')
     return timestamp
 
 
@@ -272,24 +261,13 @@ def main():
     import time
     start = time.time()
     print(f'Analysing RF Level Data')
-    # get_csv_metadata_from_sta(STA_FILE
 
-    # Analyse one CSV file and save to disk
-    # analyse_data(CSV_INPUT_FILE)
+    print(adjust_time("28 November 2017 13:58"))
 
-    # Analyse all CSV file found in specified folder
-    target_folder_match_string = './data/*.csv'
+    CSV_INPUT_FILE = './data/SITE_VG2-NB1.csv'
 
-    print(f'Finding all CSV files using the following match pattern {target_folder_match_string}')
+    get_timestamp_from_csv(CSV_INPUT_FILE)
 
-    for p in glob.glob(target_folder_match_string):
-        print(f'Found : {p}')
-        CSV_INPUT_FILEPATH = p
-        STA_FILE = '.'.join([CSV_INPUT_FILEPATH[:-4], 'sta'])
-        # get_timestamp_from_csv(CSV_INPUT_FILEPATH)
-        # return None
-        analyse_data(CSV_INPUT_FILEPATH, STA_FILE)
-        # break
 
     end = time.time()
     duration = end - start
