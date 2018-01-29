@@ -9,19 +9,19 @@
 # DONE: Input : XML File that describes equipment setup during measurement, from .sta file
 # DONE: Make bands NOT hardcoded, array based instead of individual variables names b1,b2,b3,b4,b5
 # DONE: Plot median values for each band [03 DEC]
-# TODO: Replace print statements with logging.
+# TODO: #2 Replace print statements with logging.
 # DONE : SOLVED - Band 18MHz to 30MHz get nulled!!! when using 100M wide CSV file [SOLVED 03 DEC]\ solved : median filter applied took out most of the data between 18MHZ and 30MHz
 # DONE: Add save figures to files [03 DEC]
 # DONE: Add plot to display original data before banding [03 DEC]
 # DONE: Add plot to display banded data [03 DEC]
 # TODO: Add plot to display banded and thresholded data together in one plot
 # DONE: Add plot maximized when showing
-# TODO: Add plot size specified when saving plot to disk
+# TODO: #3 Add plot size specified when saving plot to disk
 # TODO: Add median filter that have some leeway (think deviations). Original apply_median is too strict
 # DONE: Feed a list of files to analyse not only one [03 DEC]
-# TODO: Bug, handle missing STA data associated with CSV file
-# TODO: Testing framework to test integrity of the module
-# TODO: Extract time stamp from CSV/STA file for usage in Figure Title
+# TODO: #4 Bug, handle missing STA data associated with CSV file
+# DONE: Testing framework to test integrity of the module
+# DONE: Extract time stamp from CSV/STA file for usage in Figure Title
 
 import zipfile
 import os
