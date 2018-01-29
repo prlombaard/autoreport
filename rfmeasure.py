@@ -85,6 +85,7 @@ def get_csv_metadata_from_sta(zipfilename):
 
 
 def plot_normal_graph(datain, csvfilename):
+    from matplotlib import pyplot as plt
     plt.plot(datain[:, 0], datain[:, 1])
     plt.title(f'{csvfilename}')
     plt.ylabel('Level [dBm]')
@@ -162,7 +163,7 @@ def plot_scatter_graph_bands(bands, x_axis_label='insert uom', chart_title='Inse
         file_format = filename[-3:]
         # TODO : include timestamp in the filename
 
-        #DONE: Maximize the figure to be bigger before saving to disk
+        # DONE: Maximize the figure to be bigger before saving to disk
         figure = plt.gcf()
         figure.set_size_inches(16, 9)
 
