@@ -29,4 +29,30 @@ def test_get_timestamp_from_csv_default(csv_file_path, expected):
 def test_get_timestamp_from_csv_and_adjusted(csv_file_path, expected):
     assert report1.adjust_time(report1.get_timestamp_from_csv(csv_file_path)) == expected
 
-# timestamp = adjust_time(timestamp, datetimeformat=datetimeformat)
+
+@pytest.mark.parametrize('csv_file_path,expected',
+                         [('./data/VG2/SITE_VG2-NB1.csv', '28 November 2017 13:17'),
+                          ('./data/VG2/SITE_VG2-NB3.csv', '29 November 2017 10:49')])
+def test_get_timestamp_from_csv_default(csv_file_path, expected):
+    assert report1.get_timestamp_from_csv(csv_file_path, datetimeformat="DD MMMM YYYY HH:mm") == expected
+
+
+@pytest.mark.parametrize('csv_file_path,expected',
+                         [('./data/VG2/SITE_VG2-NB1.csv', '28 November 2017 13'),
+                          ('./data/VG2/SITE_VG2-NB3.csv', '29 November 2017 10')])
+def test_get_timestamp_from_csv_default(csv_file_path, expected):
+    assert report1.get_timestamp_from_csv(csv_file_path, datetimeformat="DD MMMM YYYY HH") == expected
+
+
+@pytest.mark.parametrize('csv_file_path,expected',
+                         [('./data/VG2/SITE_VG2-NB1.csv', '28 November 2017 17'),
+                          ('./data/VG2/SITE_VG2-NB3.csv', '29 November 2017 49')])
+def test_get_timestamp_from_csv_default(csv_file_path, expected):
+    assert report1.get_timestamp_from_csv(csv_file_path, datetimeformat="DD MMMM YYYY mm") == expected
+
+
+@pytest.mark.parametrize('csv_file_path,expected',
+                         [('./data/VG2/SITE_VG2-NB1.csv', '17 2017 11'),
+                          ('./data/VG2/SITE_VG2-NB3.csv', '49 2017 11')])
+def test_get_timestamp_from_csv_default(csv_file_path, expected):
+    assert report1.get_timestamp_from_csv(csv_file_path, datetimeformat="mm YYYY MM") == expected

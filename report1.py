@@ -5,6 +5,8 @@ import zipfile
 import os
 import numpy as np
 import glob
+import maya
+import arrow
 
 
 def adjust_time(incorrect_datetime, datetimeformat="DD MMMM YYYY HHmm"):
@@ -12,8 +14,8 @@ def adjust_time(incorrect_datetime, datetimeformat="DD MMMM YYYY HHmm"):
     """The real time was 27 November 2017 10:25 the device recorded 28 November 2018 13:58"""
     """Therefore the device time as read from all CSV and STA files must be adjusted back in time"""
     """by 1 day, 3hours and 33minutes or 27.55 hours"""
-    import maya
-    import arrow
+    # import maya
+    # import arrow
 
     # print(f'Incorrect datetime: {incorrect_datetime}')
 
@@ -38,10 +40,11 @@ def get_timestamp_from_csv(fpath, datetimeformat="DD MMMM YYYY HHmm"):
                 # print('timestamp found')
                 break
     # print(line)
-    timestamp = "".join([line[line.find(',') + 2:-3].replace(':', '')])
+    raw_timestamp = "".join([line[line.find(',') + 2:-3].replace(':', '')])
     # print(f'Before corrected  : {timestamp}')
     # print(f'Returning       : {timestamp}')
-    return timestamp
+    timestamp_formatted = arrow.get(maya.parse(raw_timestamp).datetime()).format(datetimeformat)
+    return timestamp_formatted
 
 
 def get_xml_data(xmldata):
@@ -92,7 +95,7 @@ def generate_report1(csv_file_paths, sta_file_paths):
         data.append(None)
         data[-1] = np.genfromtxt(csv_f, skip_header=17, skip_footer=1, delimiter=',', usecols=(0, 1))
 
-        timestamp.append(adjust_time(get_timestamp_from_csv(csv_f, datetimeformat="DD MMMM YYYY HH:mm")))
+        timestamp.append(adjust_time(get_timestamp_from_csv(csv_f), datetimeformat="DD MMMM YYYY HH:mm"))
 
         x_axis_uom_text = 'MHz'
         x_axis_uom_factor = 1 / 1000000
@@ -112,26 +115,45 @@ def generate_report1(csv_file_paths, sta_file_paths):
 
         print(csv_metadata[-1])
 
-        resBW = csv_metadata[-1]['resolutionbandwidth']
+    resBW = csv_metadata[-1]['resolutionbandwidth']
 
-    title_str = f'RF Level Measurements for VG, resolution BW={resBW}, {timestamp}'
+    # title_str = f'RF Level Measurements for VG, resolution BW={resBW}, {timestamp}'
 
-    fpath = "".join(["./figs/report01", '.PNG'])
+    fpath = "".join(["./figs/report01", '_', str(resBW), '.PNG'])
 
     # Plot original data
     from matplotlib import pyplot as plt
+    from matplotlib.ticker import AutoMinorLocator
+    plt.rcParams.update({'font.size': 18})
     for i, chart_data in enumerate(data):
         plt.plot(chart_data[:, 0], chart_data[:, 1], alpha=0.8, linewidth=1, label=timestamp[i])
     plt.legend(loc='upper right')
-    plt.title(f'Noise measurements')
+    plt.title(f'RF level measurements')
     plt.ylabel('Level [dBm]')
     plt.xlabel('Frequency [MHz]')
+
+
+    # Scale axis
+    axis_scale = list(plt.axis())
+    axis_scale[0] = 0
+    axis_scale[1] = 30
+    axis_scale[2] = -120
+    axis_scale[3] = -40
+
+    # Apply new scale to plot axis
+    plt.axis(axis_scale)
+
+    # plt.axis('auto')
+    plt.minorticks_on()
     # DONE: Maximize the figure to be bigger before saving to disk
-    # figure = plt.gcf()
-    # figure.set_size_inches(16, 9)
+    plt.grid(b=True, which='major', color='black', linestyle='-', alpha=0.25)
+    plt.grid(b=True, which='minor', color='black', linestyle='--', alpha=0.25)
+
+    figure = plt.gcf()
+    figure.set_size_inches(16, 9)
 
     plt.savefig(fname=fpath, format="PNG", dpi=100)
-    plt.grid()
+    print(f'Saved report to {fpath}')
     plt.show()
 
 
