@@ -132,7 +132,6 @@ def generate_report1(csv_file_paths, sta_file_paths):
     plt.ylabel('Level [dBm]')
     plt.xlabel('Frequency [MHz]')
 
-
     # Scale axis
     axis_scale = list(plt.axis())
     axis_scale[0] = 0
@@ -157,15 +156,51 @@ def generate_report1(csv_file_paths, sta_file_paths):
     plt.show()
 
 
-def main():
-    import time
-    start = time.time()
-    # print(f'Analysing RF Level Data')
+def report_nnb():
+    NNB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NNB1.csv', './data/VG2/SITE_VG2-NNB2.csv',
+                          './data/VG2/SITE_VG2-NNB3.csv']
+    WB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-WB1.csv', './data/VG2/SITE_VG2-WB2.csv', './data/VG2/SITE_VG2-WB3.csv']
+    NB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NB1.csv', './data/VG2/SITE_VG2-NB3.csv']
 
-    # print(adjust_time("28 November 2017 13:58"))
-    # print(adjust_time("28 November 2017 13:58", datetimeformat="DD MMMM YYYY"))
-    # print(adjust_time("28 November 2017 13:58", datetimeformat="YYYYMMDDHHmm"))
+    csv_files = NNB_CSV_INPUT_FILE
+    # csv_files = WB_CSV_INPUT_FILE
+    # csv_files = NB_CSV_INPUT_FILE
 
+    timestamp = []
+    sta_files = []
+
+    for f in csv_files:
+        timestamp.append(get_timestamp_from_csv(f))
+        print(timestamp[-1])
+        sta_files.append('.'.join([f[:-4], 'sta']))
+
+    # Read and plot data from CSV files for separate charts
+    generate_report1(csv_files, sta_files)
+
+
+def report_wb():
+    NNB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NNB1.csv', './data/VG2/SITE_VG2-NNB2.csv',
+                          './data/VG2/SITE_VG2-NNB3.csv']
+    WB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-WB1.csv', './data/VG2/SITE_VG2-WB2.csv', './data/VG2/SITE_VG2-WB3.csv']
+    NB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NB1.csv', './data/VG2/SITE_VG2-NB3.csv']
+
+    # csv_files = NNB_CSV_INPUT_FILE
+    csv_files = WB_CSV_INPUT_FILE
+    # csv_files = NB_CSV_INPUT_FILE
+
+    timestamp = []
+    sta_files = []
+
+    for f in csv_files:
+        timestamp.append(get_timestamp_from_csv(f))
+        print(timestamp[-1])
+        sta_files.append('.'.join([f[:-4], 'sta']))
+
+    # Read and plot data from CSV files for separate charts
+    generate_report1(csv_files, sta_files)
+
+
+def report_nb():
     NNB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NNB1.csv', './data/VG2/SITE_VG2-NNB2.csv',
                           './data/VG2/SITE_VG2-NNB3.csv']
     WB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-WB1.csv', './data/VG2/SITE_VG2-WB2.csv', './data/VG2/SITE_VG2-WB3.csv']
@@ -185,6 +220,15 @@ def main():
 
     # Read and plot data from CSV files for separate charts
     generate_report1(csv_files, sta_files)
+
+
+def main():
+    import time
+    start = time.time()
+
+    report_nnb()
+    report_wb()
+    report_nb()
 
     end = time.time()
     duration = end - start

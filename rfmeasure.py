@@ -151,11 +151,14 @@ def plot_scatter_graph_bands(bands, x_axis_label='insert uom', chart_title='Inse
 
     # Change the Y-Axis to something constant
     axis_scale = list(plt.axis())
+    axis_scale[0] = 5
+    axis_scale[1] = 10
     axis_scale[2] = -120
     axis_scale[3] = -30
 
     # Apply the new axis to the plot
-    plt.axis(axis_scale)
+    # plt.axis(axis_scale)
+    plt.axis('auto')
     plt.grid()
     if filename:
         print(f'Plotting {filename}')
