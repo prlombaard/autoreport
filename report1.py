@@ -8,6 +8,10 @@ import glob
 import maya
 import arrow
 
+REPORT_VERSION = "V1_3"
+default_report_width_inches = 16
+default_report_height_inches = 9
+
 
 def adjust_time(incorrect_datetime, datetimeformat="DD MMMM YYYY HHmm"):
     """Device read and stored the date incorrectly"""
@@ -85,7 +89,8 @@ def plot_normal_graph(datain, csvfilename):
     plt.show()
 
 
-def generate_report1(csv_file_paths, sta_file_paths):
+def generate_report1(csv_file_paths, sta_file_paths, report_width=default_report_width_inches,
+                     report_height=default_report_height_inches):
     # Load data from CSVs
     data = []
     timestamp = []
@@ -117,18 +122,20 @@ def generate_report1(csv_file_paths, sta_file_paths):
 
     resBW = csv_metadata[-1]['resolutionbandwidth']
 
-    # title_str = f'RF Level Measurements for VG, resolution BW={resBW}, {timestamp}'
+    # title_str = f'RF noise level measurements, resolution bandwidth of {resBW}Hz'
+    title_str = ''
 
-    fpath = "".join(["./figs/report01", '_', str(resBW), '.PNG'])
+    fpath = "".join(
+        ["./figs/", REPORT_VERSION, "_report01", '_', str(resBW), "_", str(report_width), "_", str(report_height),
+         '.PNG'])
 
     # Plot original data
     from matplotlib import pyplot as plt
-    from matplotlib.ticker import AutoMinorLocator
     plt.rcParams.update({'font.size': 18})
     for i, chart_data in enumerate(data):
-        plt.plot(chart_data[:, 0], chart_data[:, 1], alpha=0.8, linewidth=1, label=timestamp[i])
+        plt.plot(chart_data[:, 0], chart_data[:, 1], alpha=1, linewidth=1, label=timestamp[i])
     plt.legend(loc='upper right')
-    plt.title(f'RF level measurements')
+    plt.title(title_str)
     plt.ylabel('Level [dBm]')
     plt.xlabel('Frequency [MHz]')
 
@@ -137,7 +144,7 @@ def generate_report1(csv_file_paths, sta_file_paths):
     axis_scale[0] = 0
     axis_scale[1] = 30
     axis_scale[2] = -120
-    axis_scale[3] = -40
+    axis_scale[3] = -30
 
     # Apply new scale to plot axis
     plt.axis(axis_scale)
@@ -148,23 +155,21 @@ def generate_report1(csv_file_paths, sta_file_paths):
     plt.grid(b=True, which='major', color='black', linestyle='-', alpha=0.25)
     plt.grid(b=True, which='minor', color='black', linestyle='--', alpha=0.25)
 
+
     figure = plt.gcf()
-    figure.set_size_inches(16, 9)
+    figure.set_size_inches(report_width, report_height)
 
-    plt.savefig(fname=fpath, format="PNG", dpi=100)
+    plt.savefig(fname=fpath, format="PNG", dpi=100, bbox_inches='tight')
     print(f'Saved report to {fpath}')
-    plt.show()
+    # plt.show()
+    plt.close()
 
 
-def report_nnb():
-    NNB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NNB1.csv', './data/VG2/SITE_VG2-NNB2.csv',
+def report_nnb(report_width, report_height):
+    nnb_csv_input_files = ['./data/VG2/SITE_VG2-NNB1.csv', './data/VG2/SITE_VG2-NNB2.csv',
                           './data/VG2/SITE_VG2-NNB3.csv']
-    WB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-WB1.csv', './data/VG2/SITE_VG2-WB2.csv', './data/VG2/SITE_VG2-WB3.csv']
-    NB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NB1.csv', './data/VG2/SITE_VG2-NB3.csv']
 
-    csv_files = NNB_CSV_INPUT_FILE
-    # csv_files = WB_CSV_INPUT_FILE
-    # csv_files = NB_CSV_INPUT_FILE
+    csv_files = nnb_csv_input_files
 
     timestamp = []
     sta_files = []
@@ -175,18 +180,12 @@ def report_nnb():
         sta_files.append('.'.join([f[:-4], 'sta']))
 
     # Read and plot data from CSV files for separate charts
-    generate_report1(csv_files, sta_files)
+    generate_report1(csv_files, sta_files, report_width, report_height)
 
 
-def report_wb():
-    NNB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NNB1.csv', './data/VG2/SITE_VG2-NNB2.csv',
-                          './data/VG2/SITE_VG2-NNB3.csv']
-    WB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-WB1.csv', './data/VG2/SITE_VG2-WB2.csv', './data/VG2/SITE_VG2-WB3.csv']
-    NB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NB1.csv', './data/VG2/SITE_VG2-NB3.csv']
-
-    # csv_files = NNB_CSV_INPUT_FILE
-    csv_files = WB_CSV_INPUT_FILE
-    # csv_files = NB_CSV_INPUT_FILE
+def report_wb(report_width, report_height):
+    wb_csv_input_files = ['./data/VG2/SITE_VG2-WB1.csv', './data/VG2/SITE_VG2-WB2.csv', './data/VG2/SITE_VG2-WB3.csv']
+    csv_files = wb_csv_input_files
 
     timestamp = []
     sta_files = []
@@ -197,18 +196,13 @@ def report_wb():
         sta_files.append('.'.join([f[:-4], 'sta']))
 
     # Read and plot data from CSV files for separate charts
-    generate_report1(csv_files, sta_files)
+    generate_report1(csv_files, sta_files, report_width, report_height)
 
 
-def report_nb():
-    NNB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NNB1.csv', './data/VG2/SITE_VG2-NNB2.csv',
-                          './data/VG2/SITE_VG2-NNB3.csv']
-    WB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-WB1.csv', './data/VG2/SITE_VG2-WB2.csv', './data/VG2/SITE_VG2-WB3.csv']
-    NB_CSV_INPUT_FILE = ['./data/VG2/SITE_VG2-NB1.csv', './data/VG2/SITE_VG2-NB3.csv']
+def report_nb(report_width, report_height):
+    nb_csv_input_files = ['./data/VG2/SITE_VG2-NB1.csv', './data/VG2/SITE_VG2-NB3.csv']
 
-    # csv_files = NNB_CSV_INPUT_FILE
-    # csv_files = WB_CSV_INPUT_FILE
-    csv_files = NB_CSV_INPUT_FILE
+    csv_files = nb_csv_input_files
 
     timestamp = []
     sta_files = []
@@ -219,16 +213,19 @@ def report_nb():
         sta_files.append('.'.join([f[:-4], 'sta']))
 
     # Read and plot data from CSV files for separate charts
-    generate_report1(csv_files, sta_files)
+    generate_report1(csv_files, sta_files, report_width, report_height)
 
 
 def main():
     import time
     start = time.time()
 
-    report_nnb()
-    report_wb()
-    report_nb()
+    rw = 20
+    rh = 9
+
+    report_nnb(rw, rh)
+    report_wb(rw, rh)
+    report_nb(rw, rh)
 
     end = time.time()
     duration = end - start
